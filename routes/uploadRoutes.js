@@ -10,7 +10,7 @@ const fs = require('fs');
 const { uploadWeatherFile, getUploadHistory, deleteUploadLog } = require('../controllers/uploadController');
 const { protect } = require('../middleware/authMiddleware');
 const { restrictTo } = require('../middleware/roleMiddleware');
-const { uploadLimiter } = require('../middleware/rateLimiter');
+
 
 // ── Ensure uploads directory exists ──────────────────────────────────────────
 const uploadsDir = path.join(__dirname, '../uploads');
@@ -49,7 +49,6 @@ router.post(
   '/',
   protect,
   restrictTo('admin'),
-  uploadLimiter,
   upload.single('file'),
   uploadWeatherFile
 );
