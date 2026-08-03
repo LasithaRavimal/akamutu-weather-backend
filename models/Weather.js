@@ -64,8 +64,8 @@ const weatherSchema = new mongoose.Schema(
     pressure: {
       type: Number,
       required: [true, 'Pressure is required'],
-      min: [800, 'Pressure must be >= 800 hPa'],
-      max: [1100, 'Pressure must be <= 1100 hPa'],
+      min: [0, 'Pressure must be >= 0'],
+      max: [1200, 'Pressure must be <= 1200'],
     },
     source: {
       type: String,

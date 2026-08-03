@@ -40,7 +40,7 @@ const validateWeatherRecord = (record, index) => {
     { field: 'humidity', min: 0, max: 100 },
     { field: 'rainfall', min: 0, max: 2000 },
     { field: 'windSpeed', min: 0, max: 400 },
-    { field: 'pressure', min: 800, max: 1100 },
+    { field: 'pressure', min: 0, max: 1200 },
   ];
 
   for (const { field, min, max } of numericValidations) {
