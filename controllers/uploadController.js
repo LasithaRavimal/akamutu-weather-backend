@@ -97,22 +97,28 @@ const uploadWeatherFile = async (req, res) => {
       record.uploadLogId = uploadLogId;
     });
 
-    // Use insertMany with ordered:false so duplicates don't block others
-    try {
-      const result = await Weather.insertMany(validRecords, {
-        ordered: false,
-        rawResult: true,
-      });
-      insertedCount = result.insertedCount || validRecords.length;
-    } catch (bulkErr) {
-      if (bulkErr.code === 11000 || bulkErr.name === 'MongoBulkWriteError') {
-        // Some duplicates; partial success
-        insertedCount = bulkErr.result?.nInserted || 0;
-        duplicateCount = validRecords.length - insertedCount - insertErrors.length;
-      } else {
-        throw bulkErr;
+    // Use insertMany with ordered:false in batches to avoid MongoDB Atlas free tier timeouts
+    const BATCH_SIZE = 500;
+    for (let i = 0; i < validRecords.length; i += BATCH_SIZE) {
+      const batch = validRecords.slice(i, i + BATCH_SIZE);
+      try {
+        const result = await Weather.insertMany(batch, {
+          ordered: false,
+          rawResult: true,
+        });
+        insertedCount += result.insertedCount || batch.length;
+      } catch (bulkErr) {
+        if (bulkErr.code === 11000 || bulkErr.name === 'MongoBulkWriteError' || bulkErr.name === 'BulkWriteError') {
+          insertedCount += bulkErr.result?.nInserted || bulkErr.insertedCount || 0;
+          // Duplicate count is calculated at the end
+        } else {
+          console.error('Unknown bulk write error in batch:', bulkErr);
+          throw bulkErr;
+        }
       }
     }
+    
+    duplicateCount = validRecords.length - insertedCount - insertErrors.length;
 
     // ── Detect location from first valid record ───────────────────────────────
     const detectedLocation = validRecords[0]?.location || 'Unknown';
@@ -164,7 +170,13 @@ const uploadWeatherFile = async (req, res) => {
     if (filePath && fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
-    res.status(500).json({ success: false, message: 'Server error during file upload.' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error during file upload.',
+      errorName: error.name,
+      errorMessage: error.message,
+      errorStack: error.stack 
+    });
   }
 };
 

@@ -138,8 +138,8 @@ const transformMongoExport = (records) => {
   for (const raw of records) {
     const rec = transformRecord(raw);
 
-    // Skip records with missing critical fields
-    if (!rec.date || !rec.location || rec.temperature == null) {
+    // Skip records with missing critical fields or invalid dates
+    if (!rec.date || isNaN(rec.date.getTime()) || !rec.location || rec.temperature == null) {
       skipped++;
       continue;
     }
