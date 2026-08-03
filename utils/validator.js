@@ -19,6 +19,14 @@ const validateWeatherRecord = (record, index) => {
     return { isValid: false, error: `Row ${index + 1}: Not a valid object.` };
   }
 
+  // Auto-fill missing non-critical numeric fields with 0
+  const optionalNumerics = ['temperature', 'humidity', 'rainfall', 'windSpeed', 'pressure'];
+  for (const field of optionalNumerics) {
+    if (record[field] === undefined || record[field] === null || record[field] === '') {
+      record[field] = 0;
+    }
+  }
+
   // Check required fields
   for (const field of REQUIRED_FIELDS) {
     if (record[field] === undefined || record[field] === null || record[field] === '') {
