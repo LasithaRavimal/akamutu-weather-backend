@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const mongoose = require('mongoose');
 const Weather = require('../models/Weather');
 const UploadLog = require('../models/UploadLog');
 const { validateWeatherRecord } = require('../utils/validator');
@@ -90,6 +91,11 @@ const uploadWeatherFile = async (req, res) => {
     let insertedCount = 0;
     let duplicateCount = 0;
     const insertErrors = [];
+    
+    const uploadLogId = new mongoose.Types.ObjectId();
+    validRecords.forEach(record => {
+      record.uploadLogId = uploadLogId;
+    });
 
     // Use insertMany with ordered:false so duplicates don't block others
     try {
@@ -120,6 +126,7 @@ const uploadWeatherFile = async (req, res) => {
         : 'failed';
 
     await UploadLog.create({
+      _id: uploadLogId,
       filename: req.file.filename,
       originalName: req.file.originalname,
       uploadedBy: req.user._id,
@@ -216,14 +223,17 @@ const deleteUploadLog = async (req, res) => {
 
     let deletedWeatherCount = 0;
 
-    // Delete weather records for this location within the time window
-    if (log.location && log.location !== 'Unknown') {
-      const result = await Weather.deleteMany({
-        location: { $regex: new RegExp(`^${log.location.trim()}$`, 'i') },
-        createdAt: { $gte: windowStart, $lte: windowEnd },
-      });
-      deletedWeatherCount = result.deletedCount;
-    }
+    // Delete weather records associated with this upload log
+    const result = await Weather.deleteMany({
+      $or: [
+        { uploadLogId: log._id },
+        ...(log.location && log.location !== 'Unknown' ? [{
+          location: { $regex: new RegExp(`^${log.location.trim()}$`, 'i') },
+          createdAt: { $gte: windowStart, $lte: windowEnd },
+        }] : [])
+      ]
+    });
+    deletedWeatherCount = result.deletedCount;
 
     // Delete the upload log entry itself
     await UploadLog.findByIdAndDelete(id);

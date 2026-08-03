@@ -80,6 +80,11 @@ const weatherSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    uploadLogId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'UploadLog',
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -94,5 +99,6 @@ weatherSchema.index({ district: 1 });
 weatherSchema.index({ province: 1 });
 weatherSchema.index({ date: -1 });
 weatherSchema.index({ location: 1, date: -1 });
+weatherSchema.index({ uploadLogId: 1 });
 
 module.exports = mongoose.model('Weather', weatherSchema);
