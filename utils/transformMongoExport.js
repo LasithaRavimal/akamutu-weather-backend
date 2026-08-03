@@ -59,10 +59,10 @@ const resolveLocation = (lat, lng) => {
 
   // Fallback: return generic info with coordinates
   return {
-    location: `Station (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
-    district: 'Unknown',
-    province: 'Unknown',
-  };
+  location: `Station (${Number(lat).toFixed(4)}, ${Number(lng).toFixed(4)})`,
+  district: 'Unknown',
+  province: 'Unknown',
+};
 };
 
 /**
@@ -88,14 +88,18 @@ const transformRecord = (raw) => {
   const date = dateRaw ? new Date(dateRaw) : null;
 
   // ── Extract coordinates ───────────────────────────────────────
-  const lat = Array.isArray(raw.coordinates) ? raw.coordinates[0] : null;
-  const lng = Array.isArray(raw.coordinates) ? raw.coordinates[1] : null;
+const lat = Array.isArray(raw.coordinates) ? raw.coordinates[0] : undefined;
+const lng = Array.isArray(raw.coordinates) ? raw.coordinates[1] : undefined;
 
-  // ── Resolve location ──────────────────────────────────────────
-  const locationInfo =
-    lat !== null && lng !== null
-      ? resolveLocation(lat, lng)
-      : { location: 'Unknown', district: 'Unknown', province: 'Unknown' };
+// Resolve location only if both coordinates are valid numbers
+const locationInfo =
+  Number.isFinite(lat) && Number.isFinite(lng)
+    ? resolveLocation(lat, lng)
+    : {
+        location: 'Unknown',
+        district: 'Unknown',
+        province: 'Unknown',
+      };
 
   // ── Convert pressure: Pa → hPa ────────────────────────────────
   // Raw sensor values like 81089 are in Pascals; divide by 100 for hPa.
