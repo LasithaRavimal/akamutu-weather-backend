@@ -47,9 +47,6 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// ── Rate Limiter ─────────────────────────────────────────────────────────────
-const { globalLimiter } = require('./middleware/rateLimiter');
-app.use('/api', globalLimiter);
 
 // ── Static Uploads Folder ────────────────────────────────────────────────────
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
